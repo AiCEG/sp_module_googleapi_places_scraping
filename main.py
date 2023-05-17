@@ -3,13 +3,14 @@ import numpy as np
 import requests
 import json
 import time
+import sqlite3
 
 final_data = []
 
 coordinates = ['48.8588897, 2.320041']
 keywords = ['restaurant', 'bar', 'hotel']
 radius = '2500'
-api_key = 'AIzaSyD3dMlrROmIJ4m8yDWyw2NpesbtAEv6eLg'
+api_key = 'removedAPIkey'  # ask ali if you really need it
 
 count = 0
 
@@ -20,6 +21,11 @@ def generate_grid_coordinates(lat, lng, size, step):
 
     return [(lat, lng) for lat in latitudes for lng in longitudes]
 
+
+# db conn
+connection = sqlite3.connect("googleplacesdb.db")
+print(connection.total_changes)
+cursor = connection.cursor()
 
 center_lat = 48.8588897
 center_lng = 2.320041
@@ -59,6 +65,20 @@ for coordinate in coordinates:
                         rating, user_ratings_total, types, vicinity, price_level]
                 final_data.append(data)
                 count = count + 1
+
+                cursor.execute("INSERT INTO places VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                               (data[0],
+                                data[1],
+                                data[2],
+                                data[3],
+                                data[4],
+                                data[5],
+                                data[6],
+                                data[7],
+                                ''.join(data[8]),
+                                data[9],
+                                data[10]))
+
             time.sleep(1)
 
             if 'next_page_token' not in jj:
@@ -73,4 +93,6 @@ labels = ['name', 'api_keyword', 'business_status', 'place_id', 'lat',
 export_dataframe_1_medium = pd.DataFrame.from_records(
     final_data, columns=labels)
 export_dataframe_1_medium.to_csv('export_places.csv')
+
+
 print(f"Total Entries Saved: {count}")
